@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class Tile : MonoBehaviour
 {
-    public const float stepHeight = 0.25f;
+    public float stepHeight = 1f;
     public Point pos;
     public float height;
     public TerrainType terrain;
@@ -14,13 +14,11 @@ public class Tile : MonoBehaviour
     [HideInInspector] public Tile prev;
     [HideInInspector] public int distance;
 
-    bool loadFromFile = false;
-
     public Vector3 center
     {
         get
         {
-            return new Vector3(pos.x, (height * stepHeight) + .4f, pos.y);
+            return new Vector3(pos.x, transform.position.y + transform.localScale.y / 2, pos.y);
         }
     }
 
@@ -46,33 +44,32 @@ public class Tile : MonoBehaviour
         }
     }
 
-    void Match()
+    public void UpdateVisual()
     {
-        transform.localPosition = new Vector3(pos.x, (height * stepHeight / 2f) + stepHeight, pos.y);
-        transform.localScale = new Vector3(1, (height * stepHeight) + stepHeight / 2f, 1);
+        transform.localPosition = new Vector3(pos.x, ((height + 1) * stepHeight / 2f) + stepHeight, pos.y);
+        transform.localScale = new Vector3(1, ((height + 1) * stepHeight) + stepHeight / 2f, 1);
         gameObject.name = terrain.name;
-        gameObject.GetComponent<MeshRenderer>().sharedMaterial = terrain.material;
+        gameObject.GetComponent<MeshRenderer>().material = terrain.material;
     }
 
     public void Grow()
     {
-        height++;
-        Match();
+        height += 0.1f;
     }
 
     public void Shrink()
     {
-        height--;
-        Match();
+        height -= 0.1f;
     }
 
-    public void Load(Point p, float h, TerrainType t)
+    public void Load(Point p, float h, TerrainType t, float s)
     {
         pos = p;
         height = h;
         terrain = t;
+        stepHeight = s;
         FetchObstacle();
-        Match();
+        UpdateVisual();
     }
 
     public void Load(Vector3 v, TerrainType t)
@@ -80,6 +77,6 @@ public class Tile : MonoBehaviour
         pos = new Point((int)v.x, (int)v.z);
         height = v.y;
         terrain = t;
-        Match();
+        UpdateVisual();
     }
 }

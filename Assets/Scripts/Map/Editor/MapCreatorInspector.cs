@@ -18,8 +18,6 @@ public class MapCreatorInspector : Editor
     {
 
         DrawDefaultInspector();
-        if (current.autoUpdate)
-            current.GenerateMap();
         if (GUILayout.Button("Generate"))
             current.GenerateMap();
         if (GUILayout.Button("Clear"))
@@ -37,7 +35,10 @@ public class MapCreatorInspector : Editor
         if (GUILayout.Button("Load"))
             current.Load();
 
-        if (GUI.changed)
+        if (GUI.changed) {
+            if (current.autoUpdate)
+                current.GenerateMap();
             current.UpdateMarker();
+        }
     }
 }
