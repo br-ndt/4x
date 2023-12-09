@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
@@ -16,8 +16,12 @@ public class MapCreatorInspector : Editor
 
     public override void OnInspectorGUI()
     {
-
         DrawDefaultInspector();
+        if (current.renderType == RenderType.Map3D)
+        {
+            current.waterLevelMultiplier = EditorGUILayout.Slider("Water Level Multiplier", current.waterLevelMultiplier, 0.1f, 10f);
+            current.tile3DHeightMultiplier = EditorGUILayout.Slider("Tile3D Height Multiplier", current.tile3DHeightMultiplier, 0.1f, 10f);
+        }
         if (GUILayout.Button("Generate"))
             current.GenerateMap();
         if (GUILayout.Button("Clear"))

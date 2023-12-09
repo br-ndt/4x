@@ -1,15 +1,33 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
 using System.IO;
 
+public enum RenderType
+{
+    Map2D,
+    Map3D,
+}
+
 public class MapCreator : MonoBehaviour
 {
-    [SerializeField] GameObject tileSelectionIndicatorPrefab;
-    [SerializeField] GameObject emptyTile;
-    [SerializeField] GameObject waterLevelPrefab;
 
+    [SerializeField] GameObject tileSelectionIndicatorPrefab;
+    [SerializeField] GameObject emptyTile2D;
+    [SerializeField] GameObject emptyTile3D;
+    [SerializeField] GameObject waterLevelPrefab;
+    [SerializeField] TerrainType[] regions;
+
+    [SerializeField] int mapWidth;
+    [SerializeField] int mapDepth;
+    [SerializeField] int mapHeight;
+    public Noise[] noiseLayers;
+    [Range(0.1f, 10f)][SerializeField] float globalHeightMultiplier = 1f;
+    [Range(-2f, 2f)][SerializeField] float globalLift = 0f;
+    [SerializeField] public RenderType renderType;
+    [HideInInspector][Range(0.1f, 10f)] public float waterLevelMultiplier = 2.1f;
+    [HideInInspector][Range(0.1f, 10f)] public float tile3DHeightMultiplier = 1f;
     Transform marker
     {
         get
@@ -28,7 +46,7 @@ public class MapCreator : MonoBehaviour
     {
         get
         {
-            if(_waterLevel == null)
+            if (_waterLevel == null)
             {
                 GameObject instance = Instantiate(waterLevelPrefab);
                 _waterLevel = instance.transform;
@@ -39,21 +57,12 @@ public class MapCreator : MonoBehaviour
     Transform _waterLevel;
 
     Dictionary<Point, Tile> tiles = new Dictionary<Point, Tile>();
-    [SerializeField] int mapWidth;
-    [SerializeField] int mapDepth;
-    [SerializeField] int mapHeight;
-    [Range(0.1f, 10f)][SerializeField] float tileHeightMultiplier;
-    [Range(-2f, 2f)][SerializeField] float globalLift;
-    [Range(0.1f, 10f)][SerializeField] float waterLevelMultiplier = 2.1f;
-    public Noise[] noiseLayers;
 
-    [SerializeField] Point pos;
-    [SerializeField] LevelData levelData;
-    [SerializeField] string saveName;
+    [SerializeField] Point selectedPosition;
 
     public bool autoUpdate;
-
-    public TerrainType[] regions;
+    [SerializeField] LevelData levelData;
+    [SerializeField] string saveName;
 
     public void GenerateMap()
     {
@@ -63,17 +72,22 @@ public class MapCreator : MonoBehaviour
         {
             layers.Add(layer.GenerateNoiseMap(mapWidth, mapHeight));
         }
-        waterLevel.position = new Vector3(_waterLevel.position.x, tileHeightMultiplier * waterLevelMultiplier, _waterLevel.position.z);
+        if (renderType == RenderType.Map3D)
+        {
+            waterLevel.position = new Vector3(_waterLevel.position.x, tile3DHeightMultiplier * waterLevelMultiplier, _waterLevel.position.z);
+        }
+
 
         for (int i = 0; i < mapDepth * mapWidth; i++)
         {
-            int x = i / mapDepth;
-            int y = i % mapDepth;
+            int x = i % mapWidth;
+            int y = i / mapWidth;
             float currentHeight = 0;
             foreach (float[,] layer in layers)
             {
                 currentHeight += layer[x, y];
             }
+            currentHeight *= globalHeightMultiplier;
             currentHeight += globalLift;
             if (currentHeight < -1)
             {
@@ -94,17 +108,18 @@ public class MapCreator : MonoBehaviour
         }
     }
 
-    private TerrainType GetTerrainFromHeight(float h)
+    private TerrainType GetTerrainFromHeight(float height)
     {
         for (int i = 0; i < regions.Length; i++)
         {
-            if (h <= regions[i].height)
+            if (height <= regions[i].height)
             {
                 return regions[i];
             }
         }
         return regions[^1];
     }
+
 
     private void OnValidate()
     {
@@ -161,10 +176,18 @@ public class MapCreator : MonoBehaviour
 
     Tile CreateTile(Point p, float h)
     {
-        TerrainType tt = GetTerrainFromHeight(h);
-        Tile t = Instantiate(emptyTile).AddComponent<Tile>();
+        Tile t;
+        if (renderType == RenderType.Map2D)
+            t = Instantiate(emptyTile2D).AddComponent<Tile2D>();
+        else
+        {
+            t = Instantiate(emptyTile3D).AddComponent<Tile3D>();
+            ((Tile3D)t).stepHeight = tile3DHeightMultiplier;
+        }
         t.transform.parent = transform;
-        t.Load(p, h, tt, tileHeightMultiplier);
+        t.Position = p;
+        t.Height = h;
+        t.Terrain = GetTerrainFromHeight(h);
         tiles.Add(p, t);
 
         return t;
@@ -194,10 +217,8 @@ public class MapCreator : MonoBehaviour
     void GrowSingle(Point p)
     {
         Tile t = GetOrCreate(p);
-        if (t.height < mapHeight)
+        if (t.Height < mapHeight)
             t.Grow();
-        t.terrain = GetTerrainFromHeight(t.height);
-        t.UpdateVisual();
     }
 
     void ShrinkSingle(Point p)
@@ -207,37 +228,29 @@ public class MapCreator : MonoBehaviour
 
         Tile t = tiles[p];
         t.Shrink();
-        t.terrain = GetTerrainFromHeight(t.height);
-        t.UpdateVisual();
-
-
-        // if (t.height <= 0)
-        // {
-        //     tiles.Remove(p);
-        //     DestroyImmediate(t.gameObject);
-        // }
     }
 
     public void Grow()
     {
-        GrowSingle(pos);
+        GrowSingle(selectedPosition);
     }
 
     public void Shrink()
     {
-        ShrinkSingle(pos);
+        ShrinkSingle(selectedPosition);
     }
 
     public void UpdateMarker()
     {
-        Tile t = tiles.ContainsKey(pos) ? tiles[pos] : null;
-        marker.localPosition = t != null ? t.center : new Vector3(pos.x, 0, pos.y);
+        Tile t = tiles.ContainsKey(selectedPosition) ? tiles[selectedPosition] : null;
+        marker.localPosition = t != null ? t.Center : new Vector3(selectedPosition.x, 0, selectedPosition.y);
     }
 
     public void Clear()
     {
         for (int i = transform.childCount - 1; i >= 0; --i)
             DestroyImmediate(transform.GetChild(i).gameObject);
+        DestroyImmediate(waterLevel.gameObject);
         tiles.Clear();
     }
 
@@ -252,8 +265,8 @@ public class MapCreator : MonoBehaviour
         board.terrains = new List<TerrainType>(tiles.Count);
         foreach (Tile t in tiles.Values)
         {
-            board.positions.Add(new Vector3(t.pos.x, t.height, t.pos.y));
-            board.terrains.Add(t.terrain);
+            board.positions.Add(new Vector3(t.Position.x, t.Height, t.Position.y));
+            board.terrains.Add(t.Terrain);
         }
 
         string fileName = string.Format("Assets/Resources/Levels/{1}.asset", filePath, saveName);
@@ -281,6 +294,5 @@ public class MapCreator : MonoBehaviour
             Debug.Log(i);
             GetOrCreate(levelData.positions[i]);
         }
-
     }
 }
