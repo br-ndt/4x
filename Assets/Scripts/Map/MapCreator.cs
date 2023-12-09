@@ -1,8 +1,15 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
 using System.IO;
+
+public enum BorderType
+{
+    Neutral,
+    Ocean,
+    Land,
+}
 
 public enum RenderType
 {
@@ -25,6 +32,12 @@ public class MapCreator : MonoBehaviour
     public Noise[] noiseLayers;
     [Range(0.1f, 10f)][SerializeField] float globalHeightMultiplier = 1f;
     [Range(-2f, 2f)][SerializeField] float globalLift = 0f;
+    [SerializeField] public BorderType borderType;
+    [HideInInspector][Range(0, 30)] public int northBorderWidth;
+    [HideInInspector][Range(0, 30)] public int southBorderWidth;
+    [HideInInspector][Range(0, 30)] public int eastBorderWidth;
+    [HideInInspector][Range(0, 30)] public int westBorderWidth;
+    [HideInInspector][Range(0.1f, 2f)] public float borderIntensity = 2f;
     [SerializeField] public RenderType renderType;
     [HideInInspector][Range(0.1f, 10f)] public float waterLevelMultiplier = 2.1f;
     [HideInInspector][Range(0.1f, 10f)] public float tile3DHeightMultiplier = 1f;
@@ -77,6 +90,15 @@ public class MapCreator : MonoBehaviour
             waterLevel.position = new Vector3(_waterLevel.position.x, tile3DHeightMultiplier * waterLevelMultiplier, _waterLevel.position.z);
         }
 
+        float borderMod = 0f;
+        if (borderType == BorderType.Ocean)
+        {
+            borderMod = -borderIntensity;
+        }
+        else if (borderType == BorderType.Land)
+        {
+            borderMod = borderIntensity;
+        }
 
         for (int i = 0; i < mapDepth * mapWidth; i++)
         {
@@ -89,6 +111,27 @@ public class MapCreator : MonoBehaviour
             }
             currentHeight *= globalHeightMultiplier;
             currentHeight += globalLift;
+
+            if (borderType != BorderType.Neutral)
+            {
+                if (northBorderWidth > 0 && y >= mapHeight - northBorderWidth)
+                {
+                    currentHeight += (float)(y - (mapHeight - northBorderWidth)) / northBorderWidth * borderMod;
+                }
+                else if (southBorderWidth > 0 && y <= southBorderWidth)
+                {
+                    currentHeight += (float)(southBorderWidth - y) / southBorderWidth * borderMod;
+                }
+                if (eastBorderWidth > 0 && x >= mapWidth - eastBorderWidth)
+                {
+                    currentHeight += (float)(x - (mapWidth - eastBorderWidth)) / eastBorderWidth * borderMod;
+                }
+                else if (westBorderWidth > 0 && x <= westBorderWidth)
+                {
+                    currentHeight += (float)(westBorderWidth - x) / westBorderWidth * borderMod;
+                }
+            }
+
             if (currentHeight < -1)
             {
                 currentHeight = -1;
