@@ -149,7 +149,10 @@ public class MapCreator : MonoBehaviour
                 }
             }
         }
+        if (!autoUpdate)
+        {
         Save();
+        }
     }
 
     private TerrainType GetTerrainFromHeight(float height)
