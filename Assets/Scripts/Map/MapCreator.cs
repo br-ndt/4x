@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
@@ -313,6 +313,9 @@ public class MapCreator : MonoBehaviour
             board.positions.Add(new Vector3(t.Position.x, t.Height, t.Position.y));
             board.terrains.Add(t.Terrain);
         }
+        board.is3D = renderType == RenderType.Map3D;
+        board.tileHeightMultiplier = board.is3D ? tile3DHeightMultiplier : 0;
+        board.waterLevelMultiplier = waterLevelMultiplier;
 
         string fileName = string.Format("Assets/Resources/Levels/{1}.asset", filePath, saveName);
         AssetDatabase.CreateAsset(board, fileName);
