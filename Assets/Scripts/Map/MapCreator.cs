@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
@@ -26,8 +26,8 @@ public class MapCreator : MonoBehaviour
     [SerializeField] GameObject waterLevelPrefab;
     [SerializeField] TerrainType[] regions;
 
-    [SerializeField] int mapWidth;
-    [SerializeField] int mapDepth;
+    [SerializeField] public int mapWidth;
+    [SerializeField] public int mapDepth;
     [SerializeField] int mapHeight;
     public Noise[] noiseLayers;
     [Range(0.1f, 10f)][SerializeField] float globalHeightMultiplier = 1f;
@@ -171,15 +171,6 @@ public class MapCreator : MonoBehaviour
             }
         }
         return regions[^1];
-    }
-
-
-    private void OnValidate()
-    {
-        if (mapWidth < 1)
-            mapWidth = 1;
-        if (mapDepth < 1)
-            mapDepth = 1;
     }
 
     public void GrowArea()

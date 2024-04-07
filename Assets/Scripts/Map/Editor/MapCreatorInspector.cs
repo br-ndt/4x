@@ -55,4 +55,13 @@ public class MapCreatorInspector : Editor
         }
         serializedObject.ApplyModifiedProperties();
     }
+
+    private void OnValidate()
+    {
+        if (current.mapWidth < 1)
+            current.mapWidth = 1;
+        if (current.mapDepth < 1)
+            current.mapDepth = 1;
+    }
+
 }
