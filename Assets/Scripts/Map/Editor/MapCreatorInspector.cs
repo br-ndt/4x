@@ -49,10 +49,10 @@ public class MapCreatorInspector : Editor
 
         if (GUI.changed)
         {
-            serializedObject.ApplyModifiedProperties();
             if (current.autoUpdate)
                 current.GenerateMap();
             current.UpdateMarker();
         }
+        serializedObject.ApplyModifiedProperties();
     }
 }

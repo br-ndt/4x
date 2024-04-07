@@ -262,6 +262,7 @@ public class MapCreator : MonoBehaviour
         Tile t = GetOrCreate(p);
         if (t.Height < mapHeight)
             t.Grow();
+        t.Terrain = GetTerrainFromHeight(t.Height);
     }
 
     void ShrinkSingle(Point p)
@@ -271,6 +272,7 @@ public class MapCreator : MonoBehaviour
 
         Tile t = tiles[p];
         t.Shrink();
+        t.Terrain = GetTerrainFromHeight(t.Height);
     }
 
     public void Grow()
