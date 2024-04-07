@@ -70,6 +70,7 @@ public class MapCreator : MonoBehaviour
     Transform _waterLevel;
 
     Dictionary<Point, Tile> tiles = new Dictionary<Point, Tile>();
+    Hash128 mapHash;
 
     [SerializeField] Point selectedPosition;
 
@@ -81,9 +82,14 @@ public class MapCreator : MonoBehaviour
     {
         Clear();
         List<float[,]> layers = new List<float[,]>();
+        mapHash.Append(mapWidth);
+        mapHash.Append(mapDepth);
+        mapHash.Append(renderType == RenderType.Map3D ? tile3DHeightMultiplier : 0);
+        mapHash.Append(waterLevelMultiplier);
         foreach (Noise layer in noiseLayers)
         {
-            layers.Add(layer.GenerateNoiseMap(mapWidth, mapHeight));
+            layers.Add(layer.GenerateNoiseMap(mapWidth, mapDepth));
+            mapHash.Append(layer.Seed);
         }
         if (renderType == RenderType.Map3D)
         {
@@ -151,7 +157,7 @@ public class MapCreator : MonoBehaviour
         }
         if (!autoUpdate)
         {
-        Save();
+            Save();
         }
     }
 
@@ -297,6 +303,7 @@ public class MapCreator : MonoBehaviour
 
     public void Clear()
     {
+        mapHash = new();
         for (int i = transform.childCount - 1; i >= 0; --i)
             DestroyImmediate(transform.GetChild(i).gameObject);
         DestroyImmediate(waterLevel.gameObject);
@@ -310,7 +317,6 @@ public class MapCreator : MonoBehaviour
         if (!Directory.Exists(filePath) || !Directory.Exists(string.Format("{0}/Random", filePath)))
             CreateSaveDirectory();
 
-
         LevelData board = ScriptableObject.CreateInstance<LevelData>();
         board.positions = new List<Vector3>(tiles.Count);
         board.terrains = new List<TerrainType>(tiles.Count);
@@ -322,9 +328,14 @@ public class MapCreator : MonoBehaviour
         board.is3D = renderType == RenderType.Map3D;
         board.tileHeightMultiplier = board.is3D ? tile3DHeightMultiplier : 0;
         board.waterLevelMultiplier = waterLevelMultiplier;
+        board.mapHash = mapHash;
 
-        string fileName = manual ? string.Format("{0}/{1}.asset", filePath, saveName) : string.Format("{0}/Random/{1}.asset", filePath, random);
-        AssetDatabase.CreateAsset(board, fileName);
+        string fileName = manual ? string.Format("{0}/{1}.asset", filePath, saveName) : string.Format("{0}/Random/{1}.asset", filePath, board.mapHash.ToString());
+        if (!File.Exists(fileName)) {
+            AssetDatabase.CreateAsset(board, fileName);
+        } else {
+            Debug.LogWarning("Did not save file " + fileName + ", file with same name exists.");
+        }
     }
 
     void CreateSaveDirectory()

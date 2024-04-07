@@ -13,6 +13,11 @@ public class Noise
     [Range(0.1f, 5f)][SerializeField] private float lacunarity;
     [SerializeField] private Vector2 offset;
 
+    public int Seed
+    {
+        get { return seed; }
+    }
+
     public float[,] GenerateNoiseMap(int mapWidth, int mapHeight)
     {
         if (mapWidth <= 0 || mapHeight <= 0 || scale <= 0)

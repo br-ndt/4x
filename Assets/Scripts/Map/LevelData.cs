@@ -8,4 +8,5 @@ public class LevelData : ScriptableObject
     public bool is3D;
     public float tileHeightMultiplier;
     public float waterLevelMultiplier;
+    public Hash128 mapHash;
 }
