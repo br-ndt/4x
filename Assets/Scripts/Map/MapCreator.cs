@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
@@ -149,6 +149,7 @@ public class MapCreator : MonoBehaviour
                 }
             }
         }
+        Save();
     }
 
     private TerrainType GetTerrainFromHeight(float height)
@@ -299,11 +300,13 @@ public class MapCreator : MonoBehaviour
         tiles.Clear();
     }
 
-    public void Save()
+    public void Save(bool manual = false)
     {
-        string filePath = Application.dataPath + "/Resources/Levels";
-        if (!Directory.Exists(filePath))
+        string filePath = "Assets/Resources/Levels";
+        string random = Randomizer.RandomString(length: 6);
+        if (!Directory.Exists(filePath) || !Directory.Exists(string.Format("{0}/Random", filePath)))
             CreateSaveDirectory();
+
 
         LevelData board = ScriptableObject.CreateInstance<LevelData>();
         board.positions = new List<Vector3>(tiles.Count);
@@ -317,7 +320,7 @@ public class MapCreator : MonoBehaviour
         board.tileHeightMultiplier = board.is3D ? tile3DHeightMultiplier : 0;
         board.waterLevelMultiplier = waterLevelMultiplier;
 
-        string fileName = string.Format("Assets/Resources/Levels/{1}.asset", filePath, saveName);
+        string fileName = manual ? string.Format("{0}/{1}.asset", filePath, saveName) : string.Format("{0}/Random/{1}.asset", filePath, random);
         AssetDatabase.CreateAsset(board, fileName);
     }
 
@@ -329,6 +332,9 @@ public class MapCreator : MonoBehaviour
         filePath += "/Levels";
         if (!Directory.Exists(filePath))
             AssetDatabase.CreateFolder("Assets/Resources", "Levels");
+        filePath += "/Random";
+        if (!Directory.Exists(filePath))
+            AssetDatabase.CreateFolder("Assets/Resources/Levels", "Random");
         AssetDatabase.Refresh();
     }
 

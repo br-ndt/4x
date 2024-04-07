@@ -43,7 +43,7 @@ public class MapCreatorInspector : Editor
         if (GUILayout.Button("Shrink Area"))
             current.ShrinkArea();
         if (GUILayout.Button("Save"))
-            current.Save();
+            current.Save(manual: true);
         if (GUILayout.Button("Load"))
             current.Load();
 
