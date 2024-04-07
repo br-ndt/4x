@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
@@ -114,9 +114,9 @@ public class MapCreator : MonoBehaviour
 
             if (borderType != BorderType.Neutral)
             {
-                if (northBorderWidth > 0 && y >= mapHeight - northBorderWidth)
+                if (northBorderWidth > 0 && y >= mapDepth - northBorderWidth)
                 {
-                    currentHeight += (float)(y - (mapHeight - northBorderWidth)) / northBorderWidth * borderMod;
+                    currentHeight += (float)(y - (mapDepth - northBorderWidth)) / northBorderWidth * borderMod;
                 }
                 else if (southBorderWidth > 0 && y <= southBorderWidth)
                 {
